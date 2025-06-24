@@ -204,6 +204,66 @@ Example configuration:
 
 For detailed configuration options, see the [Configuration Guide](docs/CONFIGURATION.md).
 
+### Advanced Filters
+
+Foxy includes a comprehensive set of built-in filters for common proxy use cases:
+
+- **CompressionFilter**: Gzip/Brotli compression and decompression
+- **RetryFilter**: Exponential backoff retry logic for failed requests
+- **CircuitBreakerFilter**: Circuit breaker pattern to prevent cascading failures
+- **EnhancedRateLimitFilter**: Advanced rate limiting with per-client support
+- **CachingFilter**: TTL-based response caching with configurable keys
+- **AuthFilter**: JWT validation with JWKS support
+- **CorsFilter**: Cross-Origin Resource Sharing header management
+- **MetricsFilter**: Prometheus metrics collection
+- **BodyTransformFilter**: Request/response body transformation
+
+Example configuration with multiple filters:
+
+```json
+{
+  "routes": [
+    {
+      "id": "api-with-filters",
+      "target": "https://api.example.com",
+      "filters": [
+        {
+          "type": "compression",
+          "config": {
+            "enable_gzip": true,
+            "min_compress_size": 1024
+          }
+        },
+        {
+          "type": "enhanced_rate_limit",
+          "config": {
+            "req_per_sec": 100,
+            "strategy": "per_ip"
+          }
+        },
+        {
+          "type": "caching",
+          "config": {
+            "ttl_secs": 300,
+            "cache_key": "{method}:{path}"
+          }
+        }
+      ],
+      "predicates": [
+        {
+          "type_": "path",
+          "config": {
+            "pattern": "/api/*"
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+For detailed filter documentation, see the [New Filters Guide](docs/NEW_FILTERS.md).
+
 ### Security
 
 Add JWT validation with the OIDC security provider:
