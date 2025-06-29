@@ -21,7 +21,7 @@ async fn start_mock_server() -> (tokio::task::JoinHandle<()>, u16) {
         .and(warp::header::headers_cloned())
         .map(|headers: warp::http::HeaderMap| {
             println!("🔍 Mock server received GET /get request");
-            println!("📋 Headers: {:?}", headers);
+            println!("📋 Headers: {headers:?}");
 
             // Check if request came through Foxy proxy by looking for forwarded headers
             let via_foxy = headers.get("x-forwarded-for").is_some()
@@ -112,7 +112,7 @@ async fn start_mock_server() -> (tokio::task::JoinHandle<()>, u16) {
                 "🔍 Mock server received GET /anything/{} request",
                 tail.as_str()
             );
-            println!("📋 Headers: {:?}", headers);
+            println!("📋 Headers: {headers:?}");
 
             warp::reply::json(&json!({
                 "args": {},
@@ -154,7 +154,7 @@ fn create_test_config(mock_server_port: u16) -> serde_json::Value {
     json!({
         "server": {
             "host": "127.0.0.1",
-            "port": 6868
+            "port": 8080
         },
         "proxy": {
             "timeout": 30,
@@ -167,7 +167,7 @@ fn create_test_config(mock_server_port: u16) -> serde_json::Value {
         "routes": [
             {
                 "id": "httpbin-get",
-                "target": format!("http://127.0.0.1:{}", mock_server_port),
+                "target": format!("http://127.0.0.1:{mock_server_port}"),
                 "filters": [
                     {
                         "type": "path_rewrite",
@@ -195,7 +195,7 @@ fn create_test_config(mock_server_port: u16) -> serde_json::Value {
             },
             {
                 "id": "httpbin-post",
-                "target": format!("http://127.0.0.1:{}", mock_server_port),
+                "target": format!("http://127.0.0.1:{mock_server_port}"),
                 "filters": [
                     {
                         "type": "path_rewrite",
@@ -223,7 +223,7 @@ fn create_test_config(mock_server_port: u16) -> serde_json::Value {
             },
             {
                 "id": "httpbin-put",
-                "target": format!("http://127.0.0.1:{}", mock_server_port),
+                "target": format!("http://127.0.0.1:{mock_server_port}"),
                 "filters": [
                     {
                         "type": "path_rewrite",
@@ -335,7 +335,7 @@ async fn test_basic_proxy_functionality() {
             let body = resp.text().await.expect("Failed to read body");
             assert!(body.contains("httpbin") || body.contains("origin") || body.contains("url"));
         }
-        Ok(Err(e)) => panic!("Request failed: {}", e),
+        Ok(Err(e)) => panic!("Request failed: {e}"),
         Err(_) => panic!("Request timed out"),
     }
 
@@ -372,7 +372,7 @@ async fn test_anything_endpoint() {
 
     // Make request to mock anything endpoint
     println!("🚀 Making request to Foxy proxy at http://127.0.0.1:8080/anything/test");
-    println!("📡 Mock server running on port: {}", mock_port);
+    println!("📡 Mock server running on port: {mock_port}");
 
     let client = reqwest::Client::new();
     let response = timeout(
@@ -387,7 +387,7 @@ async fn test_anything_endpoint() {
             println!("✅ Response status: {}", resp.status());
             assert_eq!(resp.status(), 200);
             let body = resp.text().await.expect("Failed to read body");
-            println!("📄 Response body: {}", body);
+            println!("📄 Response body: {body}");
             assert!(body.contains("httpbin") || body.contains("origin") || body.contains("url"));
 
             // Verify it contains our proxy test marker
@@ -396,7 +396,7 @@ async fn test_anything_endpoint() {
                 "Response should contain proxy_test marker from mock server"
             );
         }
-        Ok(Err(e)) => panic!("Request failed: {}", e),
+        Ok(Err(e)) => panic!("Request failed: {e}"),
         Err(_) => panic!("Request timed out"),
     }
 
@@ -445,7 +445,7 @@ async fn test_post_method() {
             let body = resp.text().await.expect("Failed to read body");
             assert!(body.contains("httpbin") || body.contains("origin") || body.contains("url"));
         }
-        Ok(Err(e)) => panic!("Request failed: {}", e),
+        Ok(Err(e)) => panic!("Request failed: {e}"),
         Err(_) => panic!("Request timed out"),
     }
 
@@ -494,7 +494,7 @@ async fn test_put_method() {
             let body = resp.text().await.unwrap();
             assert!(body.contains("httpbin") || body.contains("origin") || body.contains("url"));
         }
-        Ok(Err(e)) => panic!("Request failed: {}", e),
+        Ok(Err(e)) => panic!("Request failed: {e}"),
         Err(_) => panic!("Request timed out"),
     }
 
@@ -543,7 +543,7 @@ async fn test_delete_method() {
             let body = resp.text().await.expect("Failed to read body");
             assert!(body.contains("httpbin") || body.contains("origin") || body.contains("url"));
         }
-        Ok(Err(e)) => panic!("Request failed: {}", e),
+        Ok(Err(e)) => panic!("Request failed: {e}"),
         Err(_) => panic!("Request timed out"),
     }
 

@@ -12,9 +12,9 @@ use std::sync::Arc;
 
 use tokio::sync::RwLock;
 
-/// Helper function to convert a hyper response to a ProxyResponse (for testing)
+/// Helper function to convert a hyper response to a `ProxyResponse` (for testing)
 #[allow(dead_code)]
-fn convert_hyper_response(resp: Response<Full<Bytes>>) -> ProxyResponse {
+fn convert_hyper_response(resp: &Response<Full<Bytes>>) -> ProxyResponse {
     let status = resp.status().as_u16();
     let headers = resp.headers().clone();
 
@@ -30,7 +30,7 @@ fn convert_hyper_response(resp: Response<Full<Bytes>>) -> ProxyResponse {
     }
 }
 
-/// Test helper to simulate convert_proxy_response functionality
+/// Test helper to simulate `convert_proxy_response` functionality
 fn test_convert_proxy_response(resp: ProxyResponse) -> Result<Response<Body>, ProxyError> {
     let mut builder = Response::builder().status(resp.status);
     let headers = builder.headers_mut().ok_or_else(|| {
@@ -43,7 +43,7 @@ fn test_convert_proxy_response(resp: ProxyResponse) -> Result<Response<Body>, Pr
         .map_err(|e| ProxyError::Other(e.to_string()))
 }
 
-/// Create a mock ProxyCore for testing
+/// Create a mock `ProxyCore` for testing
 async fn create_mock_proxy_core() -> Arc<ProxyCore> {
     use crate::config::Config;
     use crate::router::PredicateRouter;
@@ -79,7 +79,7 @@ mod server_tests {
             .unwrap();
 
         // Convert to proxy response
-        let proxy_response = convert_hyper_response(hyper_response);
+        let proxy_response = convert_hyper_response(&hyper_response);
 
         // Verify the conversion
         assert_eq!(proxy_response.status, 200);
@@ -119,7 +119,7 @@ mod server_tests {
         assert_eq!(config.health_port, cloned.health_port);
 
         // Test Debug implementation
-        let debug_str = format!("{:?}", config);
+        let debug_str = format!("{config:?}");
         assert!(debug_str.contains("ServerConfig"));
         assert!(debug_str.contains("0.0.0.0"));
         assert!(debug_str.contains("9000"));
@@ -389,7 +389,7 @@ mod server_tests {
     #[test]
     fn test_server_config_empty_json() {
         // Test with completely empty JSON (should use all defaults)
-        let json = r#"{}"#;
+        let json = r"{}";
         let config: ServerConfig = serde_json::from_str(json).unwrap();
 
         assert_eq!(config.host, "127.0.0.1");
@@ -472,7 +472,7 @@ mod server_tests {
         let server = ProxyServer::new(config, core);
 
         // Test Debug implementation
-        let debug_str = format!("{:?}", server);
+        let debug_str = format!("{server:?}");
         assert!(debug_str.contains("ProxyServer"));
         assert!(debug_str.contains("config"));
         assert!(debug_str.contains("core"));
@@ -507,8 +507,8 @@ mod server_tests {
 
         // Add many headers to test header handling
         for i in 0..50 {
-            let header_name = format!("x-custom-header-{}", i);
-            let header_value = format!("value-{}", i);
+            let header_name = format!("x-custom-header-{i}");
+            let header_value = format!("value-{i}");
             headers.insert(
                 header_name.parse::<hyper::header::HeaderName>().unwrap(),
                 header_value.parse().unwrap(),
