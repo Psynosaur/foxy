@@ -5541,11 +5541,7 @@ mod security_tests {
             / invalid_user_times.len() as u32;
 
         // Check if timing difference is significant (potential timing attack vulnerability)
-        let time_diff = if avg_valid > avg_invalid {
-            avg_valid - avg_invalid
-        } else {
-            avg_invalid - avg_valid
-        };
+        let time_diff = avg_valid.abs_diff(avg_invalid);
 
         // If timing difference is more than 1ms, it might indicate a timing vulnerability
         if time_diff.as_millis() > 1 {
@@ -6357,7 +6353,7 @@ mod security_tests {
             // Check if file is world-readable (others can read)
             if mode & 0o004 != 0 {
                 println!("WARNING: Configuration file is world-readable");
-                println!("File permissions: {:o}", mode);
+                println!("File permissions: {mode:o}");
                 println!("Consider restricting permissions to owner only (600)");
             }
 
