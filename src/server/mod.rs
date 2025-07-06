@@ -486,7 +486,7 @@ pub fn validate_headers(headers: &mut HeaderMap) -> Result<(), ProxyError> {
     let host_headers: Vec<_> = headers.get_all("host").iter().collect();
     if host_headers.len() > 1 {
         let err = ProxyError::SecurityError(
-            "Multiple Host headers detected - potential request smuggling attack".to_string()
+            "Multiple Host headers detected - potential request smuggling attack".to_string(),
         );
         warn_fmt!("Server", "{}", err);
         return Err(err);
@@ -498,7 +498,8 @@ pub fn validate_headers(headers: &mut HeaderMap) -> Result<(), ProxyError> {
             // Check for multiple Content-Length values (comma-separated)
             if cl_value.contains(',') {
                 let err = ProxyError::SecurityError(
-                    "Multiple Content-Length values detected - potential request smuggling attack".to_string()
+                    "Multiple Content-Length values detected - potential request smuggling attack"
+                        .to_string(),
                 );
                 warn_fmt!("Server", "{}", err);
                 return Err(err);
