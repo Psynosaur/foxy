@@ -484,8 +484,7 @@ impl OidcProvider {
                             .any(|k| k.common.key_id == Some(kid.clone()))
                         {
                             let err = ProxyError::SecurityError(format!(
-                                "HMAC algorithm with kid '{}' not found in JWKS - potential algorithm confusion attack",
-                                kid
+                                "HMAC algorithm with kid '{kid}' not found in JWKS - potential algorithm confusion attack"
                             ));
                             warn_fmt!("OidcProvider", "{}", err);
                             return Err(err);

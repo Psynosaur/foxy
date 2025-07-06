@@ -2106,7 +2106,7 @@ mod security_tests {
         assert!(result.is_err());
 
         if let Err(ProxyError::SecurityError(msg)) = result {
-            println!("Actual error message: {}", msg);
+            println!("Actual error message: {msg}");
             assert!(
                 msg.contains("No key ID in token and no shared secret configured")
                     || msg.contains("requires 'kid' (key ID) header for security")
@@ -4639,7 +4639,7 @@ mod security_tests {
         let result = provider.validate_token(&token).await;
         assert!(result.is_err());
         if let Err(ProxyError::SecurityError(msg)) = result {
-            println!("Actual error message: {}", msg);
+            println!("Actual error message: {msg}");
             assert!(
                 msg.contains("No key ID in token and no shared secret configured")
                     || msg.contains("HMAC algorithms require shared secret")
@@ -4693,7 +4693,7 @@ mod security_tests {
         let result = provider.validate_token(&token).await;
         assert!(result.is_err());
         if let Err(ProxyError::SecurityError(msg)) = result {
-            println!("Actual error message: {}", msg);
+            println!("Actual error message: {msg}");
             assert!(
                 msg.contains("requires 'kid' (key ID) header")
                     || msg.contains("Asymmetric algorithms require 'kid'")
@@ -4956,7 +4956,7 @@ mod security_tests {
                 );
             }
             Err(e) => {
-                println!("✓ Algorithm confusion attack properly rejected: {}", e);
+                println!("✓ Algorithm confusion attack properly rejected: {e}");
                 // Verify it's rejected for the right reason (algorithm mismatch or key validation failure)
                 let error_msg = e.to_string();
                 assert!(
@@ -4965,8 +4965,7 @@ mod security_tests {
                         || error_msg.contains("validation failed")
                         || error_msg.contains("Key ID")
                         || error_msg.contains("algorithm"),
-                    "Token should be rejected due to algorithm/key validation, got: {}",
-                    error_msg
+                    "Token should be rejected due to algorithm/key validation, got: {error_msg}"
                 );
             }
         }
@@ -5075,7 +5074,7 @@ mod security_tests {
         match result {
             Ok(claims) => {
                 println!("⚠️  WARNING: Attack token was accepted!");
-                println!("Validated claims: {:?}", claims);
+                println!("Validated claims: {claims:?}");
 
                 // This demonstrates successful privilege escalation
                 assert_eq!(claims["sub"], "attacker");
@@ -5087,7 +5086,7 @@ mod security_tests {
                 println!("   Recommendation: Disable HMAC algorithms in production");
             }
             Err(e) => {
-                println!("✓ Attack token properly rejected: {}", e);
+                println!("✓ Attack token properly rejected: {e}");
                 // Verify rejection reason - should be algorithm not allowed
                 let error_msg = e.to_string();
                 assert!(
@@ -5097,8 +5096,7 @@ mod security_tests {
                         || error_msg.contains("expired")
                         || error_msg.contains("issuer")
                         || error_msg.contains("kid"),
-                    "Token should be rejected for security reasons, got: {}",
-                    error_msg
+                    "Token should be rejected for security reasons, got: {error_msg}"
                 );
             }
         }
@@ -5175,7 +5173,7 @@ mod security_tests {
             base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(payload.to_string().as_bytes());
 
         // Create unsigned token (algorithm 'none')
-        let unsigned_token = format!("{}.{}.", header_b64, payload_b64);
+        let unsigned_token = format!("{header_b64}.{payload_b64}.");
 
         println!("Testing algorithm downgrade to 'none'");
 
@@ -5190,14 +5188,13 @@ mod security_tests {
                 );
             }
             Err(e) => {
-                println!("✓ Algorithm downgrade attack properly rejected: {}", e);
+                println!("✓ Algorithm downgrade attack properly rejected: {e}");
                 let error_msg = e.to_string();
                 assert!(
                     error_msg.contains("Algorithm not allowed")
                         || error_msg.contains("Invalid")
                         || error_msg.contains("validation failed"),
-                    "Should reject 'none' algorithm, got: {}",
-                    error_msg
+                    "Should reject 'none' algorithm, got: {error_msg}"
                 );
             }
         }
@@ -5342,7 +5339,7 @@ mod security_tests {
             // Should be rejected if symlink protection is implemented
             // Note: Current implementation may not check for symlinks
             match result {
-                Ok(content) => {
+                Ok(Some(content)) => {
                     // If symlink following is allowed, this is a security vulnerability
                     if content.contains("root:x:0:0") {
                         println!(
@@ -5351,6 +5348,9 @@ mod security_tests {
                         );
                         println!("This could be a security vulnerability if not intended");
                     }
+                }
+                Ok(None) => {
+                    println!("✓ Secret not found (expected behavior)");
                 }
                 Err(e) => {
                     println!("✓ Symlink access properly rejected: {}", e);
@@ -5430,15 +5430,12 @@ mod security_tests {
 
         // Allow up to 1ms difference (generous for unit tests)
         if max_diff > 1_000_000 {
-            println!("WARNING: Timing difference detected: {} ns", max_diff);
-            println!("Valid user/wrong pass: {:?}", time1);
-            println!("Invalid user/wrong pass: {:?}", time2);
-            println!("Valid user/valid pass: {:?}", time3);
+            println!("WARNING: Timing difference detected: {max_diff} ns");
+            println!("Valid user/wrong pass: {time1:?}");
+            println!("Invalid user/wrong pass: {time2:?}");
+            println!("Valid user/valid pass: {time3:?}");
         } else {
-            println!(
-                "✓ Constant-time comparison working - max difference: {} ns",
-                max_diff
-            );
+            println!("✓ Constant-time comparison working - max difference: {max_diff} ns");
         }
 
         // Test that the method is actually being used in the authentication flow
@@ -5446,7 +5443,7 @@ mod security_tests {
         let auth_value = base64::engine::general_purpose::STANDARD.encode("validuser1:validpass1");
         headers.insert(
             "authorization",
-            format!("Basic {}", auth_value).parse().unwrap(),
+            format!("Basic {auth_value}").parse().unwrap(),
         );
 
         let request = ProxyRequest {
@@ -5489,7 +5486,7 @@ mod security_tests {
         let mut headers1 = HeaderMap::new();
         headers1.insert(
             "authorization",
-            format!("Basic {}", valid_user_creds).parse().unwrap(),
+            format!("Basic {valid_user_creds}").parse().unwrap(),
         );
 
         let request1 = ProxyRequest {
@@ -5508,7 +5505,7 @@ mod security_tests {
         let mut headers2 = HeaderMap::new();
         headers2.insert(
             "authorization",
-            format!("Basic {}", invalid_user_creds).parse().unwrap(),
+            format!("Basic {invalid_user_creds}").parse().unwrap(),
         );
 
         let request2 = ProxyRequest {
@@ -5553,9 +5550,9 @@ mod security_tests {
         // If timing difference is more than 1ms, it might indicate a timing vulnerability
         if time_diff.as_millis() > 1 {
             println!("WARNING: Potential timing attack vulnerability detected");
-            println!("Average time for valid username: {:?}", avg_valid);
-            println!("Average time for invalid username: {:?}", avg_invalid);
-            println!("Time difference: {:?}", time_diff);
+            println!("Average time for valid username: {avg_valid:?}");
+            println!("Average time for invalid username: {avg_invalid:?}");
+            println!("Time difference: {time_diff:?}");
 
             // This is informational - timing attacks are hard to test reliably in unit tests
             // due to system noise, but significant differences should be investigated
@@ -5941,10 +5938,7 @@ mod security_tests {
         if sql_matches {
             if let Some(query) = &sql_request.query {
                 if query.contains("DROP") || query.contains("--") || query.contains("'") {
-                    println!(
-                        "WARNING: Query contains potential SQL injection patterns: {}",
-                        query
-                    );
+                    println!("WARNING: Query contains potential SQL injection patterns: {query}");
                 }
             }
         }
@@ -5968,7 +5962,7 @@ mod security_tests {
         if xss_matches {
             if let Some(query) = &xss_request.query {
                 if query.contains("<script>") || query.contains("javascript:") {
-                    println!("WARNING: Query contains potential XSS patterns: {}", query);
+                    println!("WARNING: Query contains potential XSS patterns: {query}");
                 }
             }
         }
@@ -5992,10 +5986,7 @@ mod security_tests {
         if traversal_matches {
             if let Some(query) = &traversal_request.query {
                 if query.contains("../") || query.contains("..\\") {
-                    println!(
-                        "WARNING: Query contains potential path traversal patterns: {}",
-                        query
-                    );
+                    println!("WARNING: Query contains potential path traversal patterns: {query}");
                 }
             }
         }
@@ -6032,11 +6023,8 @@ mod security_tests {
 
         for pattern in &sensitive_patterns {
             if error_msg.to_lowercase().contains(&pattern.to_lowercase()) {
-                println!(
-                    "WARNING: Error message may contain sensitive information: {}",
-                    pattern
-                );
-                println!("Error message: {}", error_msg);
+                println!("WARNING: Error message may contain sensitive information: {pattern}");
+                println!("Error message: {error_msg}");
             }
         }
 
@@ -6048,7 +6036,7 @@ mod security_tests {
         // Check if routing errors reveal internal paths or structure
         if routing_msg.contains("/internal/") || routing_msg.contains("/admin/") {
             println!("WARNING: Routing error may reveal internal application structure");
-            println!("Error message: {}", routing_msg);
+            println!("Error message: {routing_msg}");
         }
 
         // Test 3: Security error information disclosure
@@ -6058,7 +6046,7 @@ mod security_tests {
         // Check if security errors reveal internal URLs or configuration
         if security_msg.contains("internal.") || security_msg.contains(".company.com") {
             println!("WARNING: Security error may reveal internal infrastructure details");
-            println!("Error message: {}", security_msg);
+            println!("Error message: {security_msg}");
         }
 
         // Test 4: Configuration error information disclosure
@@ -6070,7 +6058,7 @@ mod security_tests {
         // Check if configuration errors reveal file paths or environment details
         if config_msg.contains("/opt/") || config_msg.contains("production") {
             println!("WARNING: Configuration error may reveal deployment details");
-            println!("Error message: {}", config_msg);
+            println!("Error message: {config_msg}");
         }
 
         // All errors should still be properly formatted
@@ -6141,7 +6129,7 @@ mod security_tests {
         if !missing_headers.is_empty() {
             println!("WARNING: Response is missing security headers:");
             for (header, desc) in &missing_headers {
-                println!("  - {}: {}", header, desc);
+                println!("  - {header}: {desc}");
             }
         }
 
@@ -6149,17 +6137,14 @@ mod security_tests {
         if let Some(frame_options) = response.headers.get("x-frame-options") {
             let value = frame_options.to_str().unwrap_or("");
             if !["DENY", "SAMEORIGIN"].contains(&value) {
-                println!("WARNING: X-Frame-Options header has weak value: {}", value);
+                println!("WARNING: X-Frame-Options header has weak value: {value}");
             }
         }
 
         if let Some(content_type_options) = response.headers.get("x-content-type-options") {
             let value = content_type_options.to_str().unwrap_or("");
             if value != "nosniff" {
-                println!(
-                    "WARNING: X-Content-Type-Options should be 'nosniff', got: {}",
-                    value
-                );
+                println!("WARNING: X-Content-Type-Options should be 'nosniff', got: {value}");
             }
         }
 
@@ -6167,10 +6152,7 @@ mod security_tests {
         if let Some(server_header) = response.headers.get("server") {
             let value = server_header.to_str().unwrap_or("");
             if value.contains("version") || value.contains("/") {
-                println!(
-                    "WARNING: Server header may reveal version information: {}",
-                    value
-                );
+                println!("WARNING: Server header may reveal version information: {value}");
             }
         }
 
@@ -6208,7 +6190,7 @@ mod security_tests {
         if let Some(host) = host_injection_request.headers.get("host") {
             if let Some(forwarded_host) = host_injection_request.headers.get("x-forwarded-host") {
                 println!("WARNING: Request contains both Host and X-Forwarded-Host headers");
-                println!("Host: {:?}, X-Forwarded-Host: {:?}", host, forwarded_host);
+                println!("Host: {host:?}, X-Forwarded-Host: {forwarded_host:?}");
                 println!("This could enable host header injection attacks");
             }
         }
@@ -6238,7 +6220,7 @@ mod security_tests {
                 .headers
                 .get("x-http-method-override")
             {
-                println!("Override method: {:?}", override_method);
+                println!("Override method: {override_method:?}");
                 println!("This could bypass method-based access controls");
             }
         }
@@ -6262,7 +6244,7 @@ mod security_tests {
         if let Some(upgrade) = protocol_request.headers.get("upgrade") {
             if let Some(connection) = protocol_request.headers.get("connection") {
                 println!("WARNING: Request attempts protocol upgrade/downgrade");
-                println!("Upgrade: {:?}, Connection: {:?}", upgrade, connection);
+                println!("Upgrade: {upgrade:?}, Connection: {connection:?}");
                 println!("This could bypass protocol-based security controls");
             }
         }
@@ -6291,7 +6273,7 @@ mod security_tests {
         if auth_headers.len() > 1 {
             println!("WARNING: Request contains multiple Authorization headers");
             for (i, header) in auth_headers.iter().enumerate() {
-                println!("  Authorization[{}]: {:?}", i, header);
+                println!("  Authorization[{i}]: {header:?}");
             }
             println!("This could cause inconsistent authentication behavior");
         }
@@ -6358,7 +6340,7 @@ mod security_tests {
         if !found_secrets.is_empty() {
             println!("WARNING: Configuration file contains potential secrets:");
             for (pattern, desc) in &found_secrets {
-                println!("  - {}: {}", pattern, desc);
+                println!("  - {pattern}: {desc}");
             }
             println!("Secrets should be externalized using environment variables or vault systems");
         }
@@ -6390,10 +6372,7 @@ mod security_tests {
         let config_size = metadata.len();
         if config_size > 1024 * 1024 {
             // 1MB
-            println!(
-                "WARNING: Configuration file is unusually large: {} bytes",
-                config_size
-            );
+            println!("WARNING: Configuration file is unusually large: {config_size} bytes");
             println!("Large config files may indicate embedded secrets or excessive complexity");
         }
 
@@ -6409,7 +6388,7 @@ mod security_tests {
         for env_var in &env_vars_to_check {
             if let Ok(value) = std::env::var(env_var) {
                 if !value.is_empty() {
-                    println!("INFO: Environment variable {} is set", env_var);
+                    println!("INFO: Environment variable {env_var} is set");
                     // Don't log the actual value for security
                     if value.len() < 10 {
                         println!(
@@ -6448,10 +6427,7 @@ mod security_tests {
 
         println!("Dependency Security Analysis:");
         for (crate_name, version_pattern, recommendation) in &vulnerable_patterns {
-            println!(
-                "  - {}: {} - {}",
-                crate_name, version_pattern, recommendation
-            );
+            println!("  - {crate_name}: {version_pattern} - {recommendation}");
         }
 
         // Test 2: Simulate cargo audit check
@@ -6481,7 +6457,7 @@ mod security_tests {
         if !security_advisories.is_empty() {
             println!("WARNING: Potential security advisories found:");
             for (id, crate_name, desc) in &security_advisories {
-                println!("  - {}: {} - {}", id, crate_name, desc);
+                println!("  - {id}: {crate_name} - {desc}");
             }
             println!("Run 'cargo audit' to check for actual vulnerabilities");
         }
@@ -6492,8 +6468,7 @@ mod security_tests {
         println!("Dependency Confusion Risk Assessment:");
         for crate_name in &internal_crates {
             println!(
-                "  - Check if '{}' exists on crates.io to prevent dependency confusion",
-                crate_name
+                "  - Check if '{crate_name}' exists on crates.io to prevent dependency confusion"
             );
         }
 
@@ -6502,10 +6477,7 @@ mod security_tests {
 
         println!("License Compliance Check:");
         for license in &restricted_licenses {
-            println!(
-                "  - Ensure no dependencies use restricted license: {}",
-                license
-            );
+            println!("  - Ensure no dependencies use restricted license: {license}");
         }
 
         // Test 5: Supply chain security
@@ -6519,7 +6491,7 @@ mod security_tests {
 
         println!("Supply Chain Security Checklist:");
         for check in &supply_chain_checks {
-            println!("  - {}", check);
+            println!("  - {check}");
         }
 
         // This test always passes as it's informational

@@ -473,8 +473,7 @@ pub fn validate_headers(headers: &mut HeaderMap) -> Result<(), ProxyError> {
         if let Ok(value_str) = value.to_str() {
             if value_str.contains('\r') || value_str.contains('\n') {
                 let err = ProxyError::SecurityError(format!(
-                    "CRLF injection detected in header '{}': contains newline characters",
-                    name
+                    "CRLF injection detected in header '{name}': contains newline characters"
                 ));
                 warn_fmt!("Server", "{}", err);
                 return Err(err);
@@ -508,8 +507,7 @@ pub fn validate_headers(headers: &mut HeaderMap) -> Result<(), ProxyError> {
             // Validate that Content-Length is a valid number
             if cl_value.parse::<u64>().is_err() {
                 let err = ProxyError::SecurityError(format!(
-                    "Invalid Content-Length header value: {}",
-                    cl_value
+                    "Invalid Content-Length header value: {cl_value}"
                 ));
                 warn_fmt!("Server", "{}", err);
                 return Err(err);
